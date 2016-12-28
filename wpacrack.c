@@ -2,6 +2,7 @@
 #include <openssl/evp.h>
 #include <openssl/hmac.h>
 #include <string.h>
+#include <time.h>
 
 int main(int argc, char *argv[]) {
 
@@ -42,6 +43,14 @@ int main(int argc, char *argv[]) {
   int beacon = 0;
   int handshake1 = 0;
   int handshake2 = 0;
+
+  time_t time1;
+  time_t time2;
+
+  time(&time2);
+
+  int kps1 = 0;
+  int kps2 = 0;
 
   strcpy(essid, argv[2]);
 
@@ -250,25 +259,32 @@ int main(int argc, char *argv[]) {
 
     k++; // Increase Keys tested
 
+    time(&time1);
+    if (time1 > time2) {
+      kps1 = k - kps2;
+      kps2 = k;
+      time2 = time1;
+    }
+
     // Print output every 10th run
     if (k % 10 == 0) {
-    printf("Keys tested: %d\n", k);
-    printf("Passphrase: %s\n", passphrase);
-    printf("Master Key: ");
-    for (i = 0; i < 32; i++) {
-      printf("%02x ", pmk[i]); // Hexadecimal with leading Zero
-    }
-    printf("\n");
-    printf("Transient Key: ");
-    for (i = 0; i < 80; i++) {
-      printf("%02x ", ptk[i]);
-    }
-    printf("\n");
-    printf("Message Integrity Check: ");
-    for (i = 0; i < 16; i++) {
-      printf("%02x ", calculated_mic[i]);
-    }
-    printf("\n\n");
+      printf("Keys tested: %d (%d k/s)\n", k, kps1);
+      printf("Passphrase: %s\n", passphrase);
+      printf("Master Key: ");
+      for (i = 0; i < 32; i++) {
+        printf("%02x ", pmk[i]); // Hexadecimal with leading Zero
+      }
+      printf("\n");
+      printf("Transient Key: ");
+      for (i = 0; i < 80; i++) {
+        printf("%02x ", ptk[i]);
+      }
+      printf("\n");
+      printf("Message Integrity Check: ");
+      for (i = 0; i < 16; i++) {
+        printf("%02x ", calculated_mic[i]);
+      }
+      printf("\n\n");
   }
 
   // Compare MIC
